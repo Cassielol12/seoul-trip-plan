@@ -266,26 +266,43 @@ const dayDate = document.querySelector("#dayDate");
 const dayTitle = document.querySelector("#dayTitle");
 const routeCount = document.querySelector("#routeCount");
 const routeMeta = document.querySelector("#routeMeta");
+const researchList = document.querySelector("#researchList");
 const tabs = document.querySelectorAll(".day-tab");
-const routeMapRoot = document.querySelector("#routeMap");
-const mapFallback = document.querySelector("#mapFallback");
+const routePreview = document.querySelector("#routePreview");
 const openMapLink = document.querySelector("#openMapLink");
 
 let activeDay = "day1";
-let routeMap;
-let routeMapLayer;
-let routeLineLayer;
-let routeMarkerLayer;
+
+const researchTopics = {
+  day1: [
+    { title: "延南洞小店路线", query: "首尔 延南洞 小店 咖啡 拍照", note: "看氛围、路线、顺逛店" },
+    { title: "Object 弘大 DIY", query: "首尔 Object 弘大 DIY 布贴", note: "看布贴款式和退税" },
+    { title: "麻浦元祖炒年糕", query: "麻浦元祖炒年糕 首尔", note: "看排队、菜单、口味" },
+    { title: "The Hyundai B2", query: "The Hyundai Seoul B2 emis depound Martin Kim", note: "看品牌楼层和购物动线" },
+    { title: "汉江泡面", query: "汝矣岛汉江公园 泡面 CU", note: "看便利店位置和拍照点" }
+  ],
+  day2: [
+    { title: "Tournesol 帅哥咖啡厅", query: "圣水 Tournesol 帅哥咖啡厅 뚜흐느솔", note: "看实拍、菜单、排队" },
+    { title: "圣水快闪", query: "圣水洞 快闪 首尔 2026", note: "看当季新快闪" },
+    { title: "LCDC Seoul", query: "LCDC Seoul 圣水 买手店", note: "看店铺结构和可买品" },
+    { title: "HAUS DOSAN", query: "HAUS DOSAN Gentle Monster Tamburins Nudake", note: "看拍照点和排队" },
+    { title: "31 Brown Cheongdam", query: "Baskin Robbins Brown Cheongdam 31冰淇凌", note: "看限定口味和空间" }
+  ],
+  day3: [
+    { title: "明洞早咖啡", query: "明洞 Blue Bottle Luft Coffee 首尔", note: "看早开门咖啡" },
+    { title: "乐天免税店", query: "乐天免税店 明洞 购物 攻略", note: "看折扣和排队" },
+    { title: "明洞 Olive Young", query: "明洞 Olive Young 必买", note: "看补货清单" },
+    { title: "首尔站 AREX", query: "首尔站 AREX 仁川机场 交通", note: "看机场交通细节" }
+  ]
+};
 
 function createStop(stop, nextPlace) {
   const tags = stop.tags.map((tag) => `<span class="tag">${tag}</span>`).join("");
-  const nextLink = nextPlace
-    ? `<a class="route-link" href="${naverWebRouteUrl([stop.routePlace, nextPlace])}" target="_blank" rel="noreferrer">去下一站</a>`
-    : "";
+  const nextLink = nextPlace ? `<a class="route-link" href="${naverTwoPointRouteUrl(stop.routePlace, nextPlace)}" rel="noreferrer">去下一站</a>` : "";
   const xhsHref = stop.xhsUrl ?? (stop.xhs ? xiaohongshuSearchUrl(stop.xhs) : "");
   const xhsLabel = stop.xhsUrl ? "小红书笔记" : "小红书搜索";
   const xhsLink = stop.xhs
-    ? `<a class="xhs-link" href="${xhsHref}" target="_blank" rel="noreferrer">${xhsLabel}</a>`
+    ? `<a class="xhs-link" href="${xhsHref}" rel="noreferrer">${xhsLabel}</a>`
     : "";
 
   return `
@@ -304,6 +321,14 @@ function createStop(stop, nextPlace) {
 function naverPoint(place) {
   if (place.naverPlaceId) return `${place.naverPlaceId},${encodeURIComponent(place.name)},PLACE_POI`;
   return `${place.position.lng},${place.position.lat},${encodeURIComponent(place.name)},PLACE_POI`;
+}
+
+function naverSchemePoint(prefix, place) {
+  return {
+    [`${prefix}lat`]: place.position.lat,
+    [`${prefix}lng`]: place.position.lng,
+    [`${prefix}name`]: place.name
+  };
 }
 
 function routePlacesFor(day) {
@@ -331,17 +356,42 @@ function routeCenter(places) {
   };
 }
 
-function naverWebRouteUrl(places) {
+function naverRouteUrl(day) {
+  const places = routePlacesFor(day);
   const center = routeCenter(places);
   const routePath = places.map(naverPoint).join("/");
   return `https://map.naver.com/p/directions/${routePath}/-/walk?c=${center.lng},${center.lat},12,0,0,0,dh`;
 }
 
+function naverTwoPointRouteUrl(from, to) {
+  return naverAppRouteUrl([from, to]);
+}
+
+function naverAppRouteUrl(places) {
+  const [start, ...rest] = places;
+  const destination = rest[rest.length - 1];
+  const viaPlaces = rest.slice(0, -1).slice(0, 4);
+  const params = new URLSearchParams({
+    appname: "seoul-trip-plan"
+  });
+
+  Object.entries(naverSchemePoint("s", start)).forEach(([key, value]) => params.set(key, value));
+  Object.entries(naverSchemePoint("d", destination)).forEach(([key, value]) => params.set(key, value));
+
+  viaPlaces.forEach((place, index) => {
+    Object.entries(naverSchemePoint(`v${index + 1}`, place)).forEach(([key, value]) => params.set(key, value));
+  });
+
+  return `nmap://route/walk?${params.toString()}`;
+}
+
+function mapOpenUrl(day) {
+  return naverAppRouteUrl(naverPlacesFor(day));
+}
+
 function drawMapRoute(day) {
-  const naverPlaces = naverPlacesFor(day);
-  const naverWebUrl = naverWebRouteUrl(naverPlaces);
-  drawRouteMap(day);
-  openMapLink.href = naverWebUrl;
+  drawRoutePreview(day);
+  openMapLink.href = mapOpenUrl(day);
   openMapLink.setAttribute("aria-label", `打开 ${day.date} 的 Naver Map 当天步行路线`);
 }
 
@@ -355,7 +405,7 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  if (href.startsWith("http") && link.target !== "_blank") {
+  if (href.startsWith("http")) {
     event.preventDefault();
     window.location.href = href;
   }
@@ -363,6 +413,15 @@ document.addEventListener("click", (event) => {
 
 function xiaohongshuSearchUrl(keyword) {
   return `https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(keyword)}`;
+}
+
+function createResearchCard(topic) {
+  return `
+    <a class="research-card" href="${xiaohongshuSearchUrl(topic.query)}" rel="noreferrer">
+      <strong>${topic.title}</strong>
+      <span>${topic.note}</span>
+    </a>
+  `;
 }
 
 function render(dayKey) {
@@ -380,6 +439,7 @@ function render(dayKey) {
   routeCount.textContent = day.count;
   mapCaption.textContent = day.caption;
   routeMeta.innerHTML = day.meta.map((item) => `<span class="meta-pill">${item}</span>`).join("");
+  researchList.innerHTML = researchTopics[dayKey].map(createResearchCard).join("");
   const routePlaces = routePlacesFor(day);
   let routeIndex = 0;
   timeline.innerHTML = day.stops
@@ -397,76 +457,52 @@ function render(dayKey) {
   drawMapRoute(day);
 }
 
-function drawRouteMap(day) {
+function drawRoutePreview(day) {
   const places = routePlacesFor(day);
-  if (!window.L) {
-    mapFallback.classList.remove("is-hidden");
-    return;
-  }
+  const bounds = places.reduce(
+    (box, place) => ({
+      minLat: Math.min(box.minLat, place.position.lat),
+      maxLat: Math.max(box.maxLat, place.position.lat),
+      minLng: Math.min(box.minLng, place.position.lng),
+      maxLng: Math.max(box.maxLng, place.position.lng)
+    }),
+    { minLat: Infinity, maxLat: -Infinity, minLng: Infinity, maxLng: -Infinity }
+  );
 
-  if (!routeMap) {
-    routeMap = L.map(routeMapRoot, {
-      attributionControl: true,
-      zoomControl: false,
-      dragging: true,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      tap: true
-    });
-    routeMapLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(routeMap);
-    routeLineLayer = L.layerGroup().addTo(routeMap);
-    routeMarkerLayer = L.layerGroup().addTo(routeMap);
-    routeMapLayer.once("load", () => mapFallback.classList.add("is-hidden"));
-  }
-
-  routeLineLayer.clearLayers();
-  routeMarkerLayer.clearLayers();
-
-  const latLngs = places.map((place) => [place.position.lat, place.position.lng]);
-  L.polyline(latLngs, {
-    color: "#1591c6",
-    opacity: 0.3,
-    weight: 9,
-    lineCap: "round",
-    lineJoin: "round"
-  }).addTo(routeLineLayer);
-  L.polyline(latLngs, {
-    color: "#2ab3e7",
-    opacity: 0.98,
-    weight: 5,
-    lineCap: "round",
-    lineJoin: "round"
-  }).addTo(routeLineLayer);
-
-  places.forEach((place, index) => {
-    const marker = L.marker([place.position.lat, place.position.lng], {
-      icon: routePinIcon(index + 1)
-    }).addTo(routeMarkerLayer);
-    marker.bindTooltip(place.name, {
-      permanent: true,
-      direction: index === 0 ? "bottom" : "top",
-      offset: index === 0 ? [0, 14] : [0, -15],
-      className: "leaflet-route-label"
-    });
+  const pad = 42;
+  const width = 390;
+  const height = 360;
+  const lngSpan = Math.max(bounds.maxLng - bounds.minLng, 0.012);
+  const latSpan = Math.max(bounds.maxLat - bounds.minLat, 0.012);
+  const project = (place) => ({
+    x: pad + ((place.position.lng - bounds.minLng) / lngSpan) * (width - pad * 2),
+    y: height - pad - ((place.position.lat - bounds.minLat) / latSpan) * (height - pad * 2)
   });
 
-  routeMap.fitBounds(latLngs, {
-    paddingTopLeft: [34, 44],
-    paddingBottomRight: [34, 84],
-    maxZoom: day === routes.day3 ? 15 : 13
-  });
-  requestAnimationFrame(() => routeMap.invalidateSize());
-}
+  const points = places.map(project);
+  const line = points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+  const pins = places
+    .map((place, index) => {
+      const point = points[index];
+      const labelX = Math.min(Math.max(point.x + 14, 54), width - 54);
+      const labelY = Math.max(point.y - 17, 24);
+      return `
+        <g>
+          <circle class="preview-pin" cx="${point.x}" cy="${point.y}" r="11"></circle>
+          <text class="preview-pin-index" x="${point.x}" y="${point.y + 0.5}">${index + 1}</text>
+          <text class="preview-label" x="${labelX}" y="${labelY}" text-anchor="middle">${place.name}</text>
+        </g>
+      `;
+    })
+    .join("");
 
-function routePinIcon(index) {
-  return L.divIcon({
-    className: "",
-    html: `<span class="leaflet-route-pin">${index}</span>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16]
-  });
+  routePreview.innerHTML = `
+    <rect x="0" y="0" width="390" height="360" rx="26" fill="#f4efe6"></rect>
+    <path class="preview-river" d="M-12 232 C58 198 112 220 162 190 C214 158 267 176 402 124"></path>
+    <path class="preview-grid" d="M48 0 V360 M96 0 V360 M144 0 V360 M192 0 V360 M240 0 V360 M288 0 V360 M336 0 V360 M0 72 H390 M0 144 H390 M0 216 H390 M0 288 H390"></path>
+    <polyline class="preview-route" points="${line}"></polyline>
+    ${pins}
+  `;
 }
 
 tabs.forEach((tab) => {

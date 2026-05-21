@@ -4,12 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>首尔 3 日路线</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -47,12 +41,9 @@
         </div>
 
         <div class="map-stage" id="mapStage">
-          <div class="route-map" id="routeMap" aria-label="当天路线地图"></div>
-          <div class="map-fallback" id="mapFallback">
-            <p>真实地图加载中，点右上角也可以直接打开 Naver Map。</p>
-          </div>
+          <svg class="route-preview" id="routePreview" viewBox="0 0 390 360" role="img" aria-label="当天路线打点图"></svg>
           <div class="map-caption" id="mapCaption">Day 1 · 明洞皇家酒店 → 延南洞 → 麻浦 → 汝矣岛汉江</div>
-          <a class="open-map-link" id="openMapLink" href="#" target="_blank" rel="noreferrer">查看当天路线</a>
+          <a class="open-map-link" id="openMapLink" href="#" rel="noreferrer">查看当天路线</a>
         </div>
       </section>
 
@@ -66,15 +57,17 @@
           <span class="route-count" id="routeCount">6 stops</span>
         </div>
         <div class="route-meta" id="routeMeta"></div>
+        <div class="research-panel">
+          <div class="research-head">
+            <span>小红书资料包</span>
+            <small>不用整理链接，先看这些</small>
+          </div>
+          <div class="research-list" id="researchList"></div>
+        </div>
         <div class="timeline" id="timeline"></div>
       </section>
     </main>
 
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
     <script src="./app.js"></script>
   </body>
 </html>
