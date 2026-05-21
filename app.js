@@ -280,12 +280,12 @@ let routeMarkerLayer;
 function createStop(stop, nextPlace) {
   const tags = stop.tags.map((tag) => `<span class="tag">${tag}</span>`).join("");
   const nextLink = nextPlace
-    ? `<a class="route-link" href="${naverTwoPointRouteUrl(stop.routePlace, nextPlace)}" data-naver-web="${naverWebRouteUrl([stop.routePlace, nextPlace])}" rel="noreferrer">去下一站</a>`
+    ? `<a class="route-link" href="${naverWebRouteUrl([stop.routePlace, nextPlace])}" data-naver-app="${naverTwoPointRouteUrl(stop.routePlace, nextPlace)}" target="_blank" rel="noreferrer">去下一站</a>`
     : "";
   const xhsHref = stop.xhsUrl ?? (stop.xhs ? xiaohongshuSearchUrl(stop.xhs) : "");
   const xhsLabel = stop.xhsUrl ? "小红书笔记" : "小红书搜索";
   const xhsLink = stop.xhs
-    ? `<a class="xhs-link" href="${xiaohongshuAppSearchUrl(stop.xhs)}" data-xhs-fallback="${xhsHref}" rel="noreferrer">${xhsLabel}</a>`
+    ? `<a class="xhs-link" href="${xiaohongshuAppSearchUrl(stop.xhs)}" data-xhs-fallback="${xhsHref}" target="_blank" rel="noreferrer">${xhsLabel}</a>`
     : "";
 
   return `
@@ -373,9 +373,10 @@ function mapOpenUrl(day) {
 
 function drawMapRoute(day) {
   const naverPlaces = naverPlacesFor(day);
+  const naverWebUrl = naverWebRouteUrl(naverPlaces);
   drawRouteMap(day);
-  openMapLink.href = mapOpenUrl(day);
-  openMapLink.dataset.naverWeb = naverWebRouteUrl(naverPlaces);
+  openMapLink.href = naverWebUrl;
+  openMapLink.dataset.naverApp = mapOpenUrl(day);
   openMapLink.setAttribute("aria-label", `打开 ${day.date} 的 Naver Map 当天步行路线`);
 }
 
@@ -383,14 +384,14 @@ document.addEventListener("click", (event) => {
   const xhsLink = event.target.closest(".xhs-link[data-xhs-fallback]");
   if (xhsLink) {
     event.preventDefault();
-    openXiaohongshuSearch(xhsLink.href, xhsLink.dataset.xhsFallback);
+    openXiaohongshuSearch(xhsLink.href, xhsLink.dataset.xhsFallback, true);
     return;
   }
 
-  const naverLink = event.target.closest("a[data-naver-web]");
+  const naverLink = event.target.closest("a[data-naver-app]");
   if (naverLink) {
     event.preventDefault();
-    openNaverRoute(naverLink.href, naverLink.dataset.naverWeb);
+    openNaverRoute(naverLink.dataset.naverApp, naverLink.href, true);
     return;
   }
 
@@ -417,7 +418,12 @@ function xiaohongshuAppSearchUrl(keyword) {
   return `xhsdiscover://search_result?keyword=${encodeURIComponent(keyword)}`;
 }
 
-function openXiaohongshuSearch(appUrl, fallbackUrl) {
+function openXiaohongshuSearch(appUrl, fallbackUrl, newPage = false) {
+  if (newPage) {
+    window.open(appUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+
   let pageStayedVisible = true;
   const markHidden = () => {
     pageStayedVisible = false;
@@ -434,9 +440,14 @@ function openXiaohongshuSearch(appUrl, fallbackUrl) {
   }, 1200);
 }
 
-function openNaverRoute(appUrl, webUrl) {
+function openNaverRoute(appUrl, webUrl, newPage = false) {
+  if (newPage) {
+    openUrl(webUrl, true);
+    return;
+  }
+
   if (!isMobileBrowser()) {
-    window.location.href = webUrl;
+    openUrl(webUrl, newPage);
     return;
   }
 
@@ -462,6 +473,15 @@ function openExternalApp(appUrl, fallbackUrl) {
 
 function isMobileBrowser() {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function openUrl(url, newPage) {
+  if (newPage) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  window.location.href = url;
 }
 
 function render(dayKey) {
