@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>首尔 3 日路线</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="phone-shell" aria-label="首尔三日游移动路线页面">
+      <section class="hero-panel">
+        <div class="status-row">
+          <span>5.23 - 5.25</span>
+          <span>Royal Hotel Seoul</span>
+        </div>
+        <div class="title-row">
+          <div>
+            <p class="eyebrow">SEOUL FIELD MAP</p>
+            <h1>吃喝逛街，顺路一点。</h1>
+          </div>
+          <button class="icon-button" id="fitMap" aria-label="重置地图视图">
+            <span aria-hidden="true">⌖</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="map-card" aria-label="首尔路线地图">
+        <div class="map-tabs" role="tablist" aria-label="选择每日路线">
+          <button class="day-tab is-active" role="tab" aria-selected="true" data-day="day1">
+            <span>Day 1</span>
+            <small>弘大 · 汝矣岛</small>
+          </button>
+          <button class="day-tab" role="tab" aria-selected="false" data-day="day2">
+            <span>Day 2</span>
+            <small>圣水 · 江南</small>
+          </button>
+          <button class="day-tab" role="tab" aria-selected="false" data-day="day3">
+            <span>Day 3</span>
+            <small>明洞 · 仁川</small>
+          </button>
+        </div>
+
+        <div class="map-stage" id="mapStage">
+          <svg class="route-preview" id="routePreview" viewBox="0 0 390 360" role="img" aria-label="当天路线打点图"></svg>
+          <div class="map-caption" id="mapCaption">Day 1 · 明洞皇家酒店 → 延南洞 → 麻浦 → 汝矣岛汉江</div>
+          <a class="open-map-link" id="openMapLink" href="#" rel="noreferrer">查看当天路线</a>
+        </div>
+      </section>
+
+      <section class="route-sheet">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="sheet-head">
+          <div>
+            <p class="eyebrow" id="dayDate">5.23 周六</p>
+            <h2 id="dayTitle">落地后直奔西边</h2>
+          </div>
+          <span class="route-count" id="routeCount">6 stops</span>
+        </div>
+        <div class="route-meta" id="routeMeta"></div>
+        <div class="research-panel">
+          <div class="research-head">
+            <span>小红书资料包</span>
+            <small>不用整理链接，先看这些</small>
+          </div>
+          <div class="research-list" id="researchList"></div>
+        </div>
+        <div class="timeline" id="timeline"></div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
