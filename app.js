@@ -285,7 +285,7 @@ function createStop(stop, nextPlace) {
   const xhsHref = stop.xhsUrl ?? (stop.xhs ? xiaohongshuSearchUrl(stop.xhs) : "");
   const xhsLabel = stop.xhsUrl ? "小红书笔记" : "小红书搜索";
   const xhsLink = stop.xhs
-    ? `<a class="xhs-link" href="${xiaohongshuAppSearchUrl(stop.xhs)}" data-xhs-fallback="${xhsHref}" target="_blank" rel="noreferrer">${xhsLabel}</a>`
+    ? `<a class="xhs-link" href="${xhsHref}" data-xhs-app="${xiaohongshuAppSearchUrl(stop.xhs)}" target="_blank" rel="noreferrer">${xhsLabel}</a>`
     : "";
 
   return `
@@ -381,10 +381,10 @@ function drawMapRoute(day) {
 }
 
 document.addEventListener("click", (event) => {
-  const xhsLink = event.target.closest(".xhs-link[data-xhs-fallback]");
+  const xhsLink = event.target.closest(".xhs-link[data-xhs-app]");
   if (xhsLink) {
     event.preventDefault();
-    openXiaohongshuSearch(xhsLink.href, xhsLink.dataset.xhsFallback, true);
+    openXiaohongshuSearch(xhsLink.dataset.xhsApp, xhsLink.href, true);
     return;
   }
 
@@ -420,7 +420,7 @@ function xiaohongshuAppSearchUrl(keyword) {
 
 function openXiaohongshuSearch(appUrl, fallbackUrl, newPage = false) {
   if (newPage) {
-    window.open(appUrl, "_blank", "noopener,noreferrer");
+    openUrl(fallbackUrl, true);
     return;
   }
 
