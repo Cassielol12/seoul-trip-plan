@@ -40,6 +40,58 @@ body {
     sans-serif;
 }
 
+.bridge-body {
+  padding: max(24px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+  background: #f3ece2;
+}
+
+.bridge-shell {
+  width: min(100%, 390px);
+  padding: 32px 24px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.bridge-shell h1 {
+  max-width: none;
+  margin-bottom: 12px;
+}
+
+.bridge-copy {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.bridge-keyword {
+  margin: 18px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--route-soft);
+  color: #6b3328;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.bridge-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: 1px solid rgba(238, 107, 77, 0.28);
+  border-radius: 999px;
+  background: var(--route);
+  color: #fff8f3;
+  padding: 0 18px;
+  font-size: 15px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
 button {
   font: inherit;
 }

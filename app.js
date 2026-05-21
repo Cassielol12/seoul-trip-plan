@@ -280,12 +280,12 @@ let routeMarkerLayer;
 function createStop(stop, nextPlace) {
   const tags = stop.tags.map((tag) => `<span class="tag">${tag}</span>`).join("");
   const nextLink = nextPlace
-    ? `<a class="route-link" href="${naverTwoPointRouteUrl(stop.routePlace, nextPlace)}" data-naver-web="${naverWebRouteUrl([stop.routePlace, nextPlace])}" rel="noreferrer">去下一站</a>`
+    ? `<a class="route-link" href="${naverWebRouteUrl([stop.routePlace, nextPlace])}" target="_blank" rel="noreferrer">去下一站</a>`
     : "";
   const xhsHref = stop.xhsUrl ?? (stop.xhs ? xiaohongshuSearchUrl(stop.xhs) : "");
   const xhsLabel = stop.xhsUrl ? "小红书笔记" : "小红书搜索";
   const xhsLink = stop.xhs
-    ? `<a class="xhs-link" href="${xiaohongshuAppSearchUrl(stop.xhs)}" data-xhs-fallback="${xhsHref}" rel="noreferrer">${xhsLabel}</a>`
+    ? `<a class="xhs-link" href="${xhsHref}" target="_blank" rel="noreferrer">${xhsLabel}</a>`
     : "";
 
   return `
@@ -304,14 +304,6 @@ function createStop(stop, nextPlace) {
 function naverPoint(place) {
   if (place.naverPlaceId) return `${place.naverPlaceId},${encodeURIComponent(place.name)},PLACE_POI`;
   return `${place.position.lng},${place.position.lat},${encodeURIComponent(place.name)},PLACE_POI`;
-}
-
-function naverSchemePoint(prefix, place) {
-  return {
-    [`${prefix}lat`]: place.position.lat,
-    [`${prefix}lng`]: place.position.lng,
-    [`${prefix}name`]: place.name
-  };
 }
 
 function routePlacesFor(day) {
@@ -345,55 +337,15 @@ function naverWebRouteUrl(places) {
   return `https://map.naver.com/p/directions/${routePath}/-/walk?c=${center.lng},${center.lat},12,0,0,0,dh`;
 }
 
-function naverTwoPointRouteUrl(from, to) {
-  return naverAppRouteUrl([from, to]);
-}
-
-function naverAppRouteUrl(places) {
-  const [start, ...rest] = places;
-  const destination = rest[rest.length - 1];
-  const viaPlaces = rest.slice(0, -1).slice(0, 4);
-  const params = new URLSearchParams({
-    appname: "seoul-trip-plan"
-  });
-
-  Object.entries(naverSchemePoint("s", start)).forEach(([key, value]) => params.set(key, value));
-  Object.entries(naverSchemePoint("d", destination)).forEach(([key, value]) => params.set(key, value));
-
-  viaPlaces.forEach((place, index) => {
-    Object.entries(naverSchemePoint(`v${index + 1}`, place)).forEach(([key, value]) => params.set(key, value));
-  });
-
-  return `nmap://route/walk?${params.toString()}`;
-}
-
-function mapOpenUrl(day) {
-  return naverAppRouteUrl(naverPlacesFor(day));
-}
-
 function drawMapRoute(day) {
   const naverPlaces = naverPlacesFor(day);
+  const naverWebUrl = naverWebRouteUrl(naverPlaces);
   drawRouteMap(day);
-  openMapLink.href = mapOpenUrl(day);
-  openMapLink.dataset.naverWeb = naverWebRouteUrl(naverPlaces);
+  openMapLink.href = naverWebUrl;
   openMapLink.setAttribute("aria-label", `打开 ${day.date} 的 Naver Map 当天步行路线`);
 }
 
 document.addEventListener("click", (event) => {
-  const xhsLink = event.target.closest(".xhs-link[data-xhs-fallback]");
-  if (xhsLink) {
-    event.preventDefault();
-    openXiaohongshuSearch(xhsLink.href, xhsLink.dataset.xhsFallback);
-    return;
-  }
-
-  const naverLink = event.target.closest("a[data-naver-web]");
-  if (naverLink) {
-    event.preventDefault();
-    openNaverRoute(naverLink.href, naverLink.dataset.naverWeb);
-    return;
-  }
-
   const link = event.target.closest("a[href]");
   if (!link) return;
 
@@ -403,65 +355,14 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  if (href.startsWith("http")) {
+  if (href.startsWith("http") && link.target !== "_blank") {
     event.preventDefault();
     window.location.href = href;
   }
 });
 
 function xiaohongshuSearchUrl(keyword) {
-  return `https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(keyword)}`;
-}
-
-function xiaohongshuAppSearchUrl(keyword) {
-  return `xhsdiscover://search_result?keyword=${encodeURIComponent(keyword)}`;
-}
-
-function openXiaohongshuSearch(appUrl, fallbackUrl) {
-  let pageStayedVisible = true;
-  const markHidden = () => {
-    pageStayedVisible = false;
-  };
-
-  document.addEventListener("visibilitychange", markHidden, { once: true });
-  window.addEventListener("pagehide", markHidden, { once: true });
-  window.location.href = appUrl;
-
-  setTimeout(() => {
-    if (pageStayedVisible && document.visibilityState === "visible") {
-      window.location.href = fallbackUrl;
-    }
-  }, 1200);
-}
-
-function openNaverRoute(appUrl, webUrl) {
-  if (!isMobileBrowser()) {
-    window.location.href = webUrl;
-    return;
-  }
-
-  openExternalApp(appUrl, webUrl);
-}
-
-function openExternalApp(appUrl, fallbackUrl) {
-  let pageStayedVisible = true;
-  const markHidden = () => {
-    pageStayedVisible = false;
-  };
-
-  document.addEventListener("visibilitychange", markHidden, { once: true });
-  window.addEventListener("pagehide", markHidden, { once: true });
-  window.location.href = appUrl;
-
-  setTimeout(() => {
-    if (pageStayedVisible && document.visibilityState === "visible") {
-      window.location.href = fallbackUrl;
-    }
-  }, 1200);
-}
-
-function isMobileBrowser() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return `./xhs-search.html?keyword=${encodeURIComponent(keyword)}`;
 }
 
 function render(dayKey) {
